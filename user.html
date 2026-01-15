@@ -5,21 +5,19 @@
 <title>Followers Boost</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
 body{
   margin:0;
-  font-family:Arial, sans-serif;
+  font-family:Arial,sans-serif;
   background:linear-gradient(135deg,#1f1c2c,#928dab);
   min-height:100vh;
   display:flex;
   justify-content:center;
-  align-items:center;
+  padding:20px 0;
 }
-
 .card{
   background:#fff;
   width:92%;
@@ -28,16 +26,34 @@ body{
   padding:26px;
   box-shadow:0 25px 50px rgba(0,0,0,.4);
 }
+.gradient{
+  background:linear-gradient(90deg,#ff512f,#dd2476,#24c6dc,#514a9d);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-align:center;
+}
+h1{margin:0}
+.sub{text-align:center;font-size:14px;margin:10px 0}
 
-h1{text-align:center;margin:0;color:#1f1c2c}
-.sub{text-align:center;color:#555;font-size:14px;margin:8px 0 18px}
+.profile-box{display:flex;gap:10px}
+.profile-box button{
+  flex:1;
+  padding:12px;
+  border-radius:12px;
+  border:2px solid #ccc;
+  background:#fff;
+  font-weight:600;
+}
+.profile-box button.selected{border-color:#1f1c2c}
+
+.form{display:none}
+.form.show{display:block}
 
 .status{
   text-align:center;
-  padding:12px;
-  border-radius:12px;
-  font-size:14px;
-  margin-bottom:14px;
+  padding:10px;
+  border-radius:10px;
+  margin:12px 0;
 }
 .status.on{background:#e8fff1;color:#007a3d}
 .status.off{background:#ffeaea;color:#b30000}
@@ -50,118 +66,180 @@ input,select,button{
   border:1px solid #ccc;
   font-size:14px;
 }
+button.active{background:#1f1c2c;color:#fff;border:none}
+button.disabled{background:#aaa;color:#fff;border:none}
 
-button{
-  margin-top:18px;
-  border:none;
-  font-size:16px;
-}
-button.active{background:#1f1c2c;color:#fff;cursor:pointer}
-button.disabled{background:#aaa;color:#fff;cursor:not-allowed}
+.error{color:#b30000;text-align:center;font-size:13px;margin-top:8px}
 
-.error{
-  text-align:center;
-  font-size:13px;
-  color:#b30000;
-  margin-top:8px;
+.input-error{
+  border:2px solid red;
+  animation:shake .3s;
 }
+@keyframes shake{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-4px)}
+  50%{transform:translateX(4px)}
+  75%{transform:translateX(-4px)}
+  100%{transform:translateX(0)}
+}
+
+button.loading{
+  pointer-events:none;
+  position:relative;
+}
+button.loading::after{
+  content:"";
+  width:18px;
+  height:18px;
+  border:3px solid #fff;
+  border-top-color:transparent;
+  border-radius:50%;
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 
 <body>
 
 <div class="card">
-  <h1>🚀 Followers Boost</h1>
-  <h1>Private profile only followers available</h1>
-  <div class="sub">Premium Instagram Growth Service</div>
+  <h1 class="gradient">🚀 Followers Boost</h1>
+  <div class="sub gradient">Premium Instagram Growth Service</div>
 
-  <div id="statusBox" class="status off">Checking availability…</div>
+  <div class="sub"><b>Is your profile?</b></div>
+  <div class="profile-box">
+    <button id="publicBtn">Public</button>
+    <button id="privateBtn">Private</button>
+  </div>
 
-  <input type="text" id="name" placeholder="Your Name">
-  <input type="tel" id="number" placeholder="Mobile Number">
-  <input type="text" id="username" placeholder="Username">
-  <input type="text" id="idLink" placeholder="Instagram ID Link">
+  <div class="form" id="formBox">
+    <div id="statusBox" class="status off">Checking availability…</div>
 
-  <select id="plan">
-    <option value="">Select a plan</option>
-    <option value="₹50 - 500 Followers">₹50 - 500 Followers</option>
-    <option value="₹100 - 1000 Followers">₹100 - 1000 Followers</option>
-    <option value="₹50 - 1000 Likes">₹50 - 1000 Likes</option>
-    <option value="₹20 - 500 Story seen">₹20 - 500 Story seen</option
-  </select>
+    <input id="name" placeholder="Your Name">
+    <input id="number" placeholder="Mobile Number">
+    <input id="username" placeholder="Instagram Username">
+    <input id="idLink" placeholder="Instagram ID Link">
 
-  <button id="orderBtn" class="disabled">Order via WhatsApp</button>
-  <div id="errorMsg" class="error"></div>
+    <select id="plan">
+      <option value="">Select plan</option>
+    </select>
+
+    <button id="orderBtn" class="disabled">Order via WhatsApp</button>
+    <div id="errorMsg" class="error"></div>
+  </div>
 </div>
 
 <script>
 firebase.initializeApp({
   apiKey: "AIzaSyAmLWlU0bPJfNR0sOtKyN5FGHGNWSDAFQI",
   authDomain: "followers-f4d1a.firebaseapp.com",
-  databaseURL: "https://followers-f4d1a-default-rtdb.firebaseio.com",
-  projectId: "followers-f4d1a",
-  storageBucket: "followers-f4d1a.firebasestorage.app",
-  messagingSenderId: "28363866926",
-  appId: "1:28363866926:web:7b34dbf017e71b8e2f70bf"
+  databaseURL: "https://followers-f4d1a-default-rtdb.firebaseio.com"
 });
 
-const db = firebase.database();
-const statusBox = document.getElementById("statusBox");
-const btn = document.getElementById("orderBtn");
+const nameInput = document.getElementById("name");
+const numberInput = document.getElementById("number");
+const usernameInput = document.getElementById("username");
+const idLinkInput = document.getElementById("idLink");
+const plan = document.getElementById("plan");
+const inputs = [nameInput, numberInput, usernameInput, idLinkInput, plan];
+
+const orderBtn = document.getElementById("orderBtn");
 const errorMsg = document.getElementById("errorMsg");
+const statusBox = document.getElementById("statusBox");
 
-db.ref("orderControl").on("value", snap=>{
-  const data = snap.val();
-  if(!data) return;
+function clearErrors(){
+  inputs.forEach(i=>i.classList.remove("input-error"));
+}
 
-  if(data.status === "on"){
-    statusBox.innerText = "Orders are available";
-    statusBox.className = "status on";
-    btn.className = "active";
+function validate(){
+  clearErrors();
+  let ok = true;
+  const mobile=/^[6-9]\d{9}$/;
+
+  inputs.forEach(i=>{
+    if(!i.value){
+      i.classList.add("input-error");
+      ok=false;
+    }
+  });
+
+  if(numberInput.value && !mobile.test(numberInput.value)){
+    numberInput.classList.add("input-error");
+    errorMsg.textContent="Invalid mobile number";
+    return false;
+  }
+
+  if(!ok){
+    errorMsg.textContent="Please fill all fields";
+  }
+  return ok;
+}
+
+firebase.database().ref("orderControl").on("value",snap=>{
+  const status = snap.val()?.status;
+  if(status==="on"){
+    statusBox.textContent="Orders are available";
+    statusBox.className="status on";
+    orderBtn.classList.remove("disabled");
+    orderBtn.classList.add("active");
   }else{
-    statusBox.innerText = "Orders are unavailable";
-    statusBox.className = "status off";
-    btn.className = "disabled";
+    statusBox.textContent="Orders are unavailable";
+    statusBox.className="status off";
+    orderBtn.classList.remove("active");
+    orderBtn.classList.add("disabled");
   }
 });
 
-btn.onclick = function(){
-  errorMsg.innerText = "";
+orderBtn.onclick=()=>{
+  if(!orderBtn.classList.contains("active")) return;
 
-  if(btn.className !== "active"){
-    errorMsg.innerText = "Service is currently unavailable.";
-    return;
-  }
+  errorMsg.textContent="";
+  if(!validate()) return;
 
-  const name = document.getElementById("name").value.trim();
-  const number = document.getElementById("number").value.trim();
-  const username = document.getElementById("username").value.trim();
-  const idLink = document.getElementById("idLink").value.trim();
-  const plan = document.getElementById("plan").value;
-
-  if(!name || !number || !username || !idLink || !plan){
-    errorMsg.innerText = "Please fill all fields.";
-    return;
-  }
-
-  const indiaMobilePattern = /^[6-9][0-9]{9}$/;
-  if(!indiaMobilePattern.test(number)){
-    errorMsg.innerText = "Enter a valid mobile number";
-    return;
-  }
+  orderBtn.classList.add("loading");
 
   const msg =
-    "New Order Received%0A"+
-    "Name: "+name+"%0A"+
-    "Mobile: "+number+"%0A"+
-    "Username: "+username+"%0A"+
-    "Instagram Link: "+idLink+"%0A"+
-    "Plan: "+plan;
+`New Order
+Name: ${nameInput.value}
+Mobile: ${numberInput.value}
+Username: ${usernameInput.value}
+Link: ${idLinkInput.value}
+Plan: ${plan.value}`;
 
-  window.open(
-    "https://wa.me/918918366224?text=" + msg,
-    "_blank"
-  );
+  setTimeout(()=>{
+    orderBtn.classList.remove("loading");
+    window.open("https://wa.me/918918366224?text="+encodeURIComponent(msg));
+  },700);
+};
+
+publicBtn.onclick=()=>{
+  publicBtn.classList.add("selected");
+  privateBtn.classList.remove("selected");
+  plan.innerHTML=`
+    <option value="">Select plan</option>
+    <option>₹30 - 250 Followers</option>
+    <option>₹50 - 500 Followers</option>
+    <option>₹100 - 1000 Followers</option>
+    <option>₹50 - 1000 likes</option>
+    <option>₹25 - 500 likes</option>
+    <option>₹40 - 1000 Story seen</option>
+    <option>₹25 - 500 Story seen</option>`;
+  formBox.classList.add("show");
+};
+
+privateBtn.onclick=()=>{
+  privateBtn.classList.add("selected");
+  publicBtn.classList.remove("selected");
+  plan.innerHTML=`
+    <option value="">Select plan</option>
+    <option>₹30 - 250 Followers</option>
+    <option>₹50 - 500 Followers</option>
+    <option>₹100 - 1000 Followers</option>`;
+  formBox.classList.add("show");
 };
 </script>
 
